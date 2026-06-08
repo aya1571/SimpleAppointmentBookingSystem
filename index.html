@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Appointment Booking System | Simple & Reliable</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #eef2f9 0%, #e0e8f2 100%);
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+
+        /* main app container */
+        .booking-app {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            backdrop-filter: blur(0px);
+            transition: all 0.2s;
+        }
+
+        /* header area */
+        .app-header {
+            background: #0a2a3b;
+            color: white;
+            padding: 2rem 2rem;
+            text-align: center;
+        }
+
+        .app-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .app-header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            margin-top: 8px;
+        }
+
+        /* control bar with date + stats */
+        .control-bar {
+            background: white;
+            padding: 1rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid #e2edf5;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: #f4f9fe;
+            padding: 0.45rem 1.3rem;
+            border-radius: 60px;
+        }
+
+        .date-selector label {
+            font-weight: 600;
+            color: #1a5a7a;
+            font-size: 0.9rem;
+        }
+
+        #appointmentDate {
+            border: 1px solid #cbdde9;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+            outline: none;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        #appointmentDate:focus {
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
+        }
+
+        .stats-badge {
+            background: #eef3fa;
+            padding: 0.45rem 1.3rem;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1a5a7a;
+        }
+
+        .stats-badge span {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #0a4b68;
+        }
+
+        /* two column layout */
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        /* slots panel (left) */
+        .slots-panel {
+            flex: 2.2;
+            min-width: 260px;
+            padding: 2rem 1.8rem;
+            background: #ffffff;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a3e52;
+            border-left: 5px solid #2c7da0;
+            padding-left: 0.9rem;
+            margin-bottom: 1.6rem;
+        }
+
+        .time-slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+            gap: 1rem;
+        }
+
+        .slot-card {
+            background: white;
+            border: 1px solid #deeaf2;
+            border-radius: 1.3rem;
+            padding: 0.85rem 0.3rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #1c556e;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        }
+
+        .slot-card:hover:not(.slot-booked) {
+            background: #e2f0fa;
+            border-color: #2c7da0;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 18px -10px rgba(44,125,160,0.25);
+        }
+
+        .slot-booked {
+            background: #f0f4f8;
+            border-color: #dee6ed;
+            color: #8fa6b7;
+            cursor: not-allowed;
+            text-decoration: line-through;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .slot-booked::after {
+            content: "🔒";
+            font-size: 0.7rem;
+            margin-left: 6px;
+            opacity: 0.7;
+        }
+
+        .slot-selected {
+            background: #2c7da0;
+            border-color: #135e7c;
+            color: white;
+            box-shadow: 0 5px 12px rgba(44,125,160,0.35);
+            transform: scale(0.98);
+        }
+
+        /* right panel: booking form */
+        .booking-panel {
+            flex: 1.2;
+            min-width: 280px;
+            background: #fbfeff;
+            border-left: 1px solid #e7eef5;
+            padding: 2rem 1.8rem;
+        }
+
+        .booking-panel h3 {
+            font-size: 1.35rem;
+            font-weight: 650;
+            color: #1c3f53;
+            margin-bottom: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #3f748f;
+            margin-bottom: 0.3rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 1.2rem;
+            border: 1px solid #cfe0ea;
+            background: white;
+            font-size: 0.9rem;
+            transition: 0.2s;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.1);
+        }
+
+        .selected-slot-info {
+            background: #eef5fc;
+            padding: 0.8rem 1rem;
+            border-radius: 1.2rem;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            border-left: 4px solid #2c7da0;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: #136b8c;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 0.3rem;
+        }
+
+        .btn-primary:hover {
+            background: #0a5570;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #eaf1f7;
+            color: #1f627f;
+            margin-top: 0.7rem;
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: #dfe9f1;
+        }
+
+        /* appointments list */
+        .appointments-list {
+            margin-top: 1.8rem;
+            border-top: 1px solid #e3edf5;
+            padding-top: 1.3rem;
+        }
+
+        .appointments-list h4 {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #2c6f8e;
+            margin-bottom: 0.8rem;
+            letter-spacing: 0.3px;
+        }
+
+        .booking-item {
+            background: white;
+            border-radius: 1rem;
+            padding: 0.65rem 0.9rem;
+            margin-bottom: 0.7rem;
+            border: 1px solid #e3edf4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            transition: 0.1s;
+        }
+
+        .booking-info {
+            font-weight: 600;
+            color: #134b64;
+        }
+
+        .booking-info small {
+            font-weight: normal;
+            color: #5c8dab;
+            font-size: 0.7rem;
+        }
+
+        .cancel-btn {
+            background: none;
+            border: none;
+            color: #bc3f4a;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 30px;
+            transition: 0.1s;
+        }
+
+        .cancel-btn:hover {
+            background: #fee9eb;
+            transform: scale(1.05);
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #8aaec2;
+            font-size: 0.8rem;
+            padding: 0.8rem;
+            font-style: italic;
+        }
+
+        footer {
+            background: #f9fdfe;
+            text-align: center;
+            font-size: 0.7rem;
+            padding: 1rem;
+            color: #5f88a0;
+            border-top: 1px solid #e6f0f6;
+        }
+
+        @media (max-width: 780px) {
+            .slots-panel, .booking-panel {
+                flex: auto;
+                width: 100%;
+            }
+            .booking-panel {
+                border-left: none;
+                border-top: 1px solid #e7eef5;
+            }
+            .control-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            body {
+                padding: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="booking-app">
+    <div class="app-header">
+        <h1>📅 Appointment Booking</h1>
+        <p>Simple, fast & reliable — pick a date, choose a slot, and confirm</p>
+    </div>
+
+    <div class="control-bar">
+        <div class="date-selector">
+            <label>📆 Select Date</label>
+            <input type="date" id="appointmentDate">
+        </div>
+        <div class="stats-badge">
+            ✅ Booked slots: <span id="totalBookedCount">0</span>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <!-- Time slots area -->
+        <div class="slots-panel">
+            <div class="section-title">⏰ Available time slots</div>
+            <div id="slotsContainer" class="time-slots-grid">
+                <div class="slot-card">⏳ Loading...</div>
+            </div>
+        </div>
+
+        <!-- Booking sidebar -->
+        <div class="booking-panel">
+            <h3>✍️ New appointment</h3>
+            <div class="input-group">
+                <label>Full name *</label>
+                <input type="text" id="clientName" placeholder="e.g. Olivia Chen" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>Email / Phone</label>
+                <input type="text" id="clientContact" placeholder="contact@example.com or phone">
+            </div>
+            <div class="selected-slot-info" id="selectedSlotDisplay">
+                ⚡ No time slot selected
+            </div>
+            <button id="confirmBookingButton" class="btn-primary">✔ Confirm Booking</button>
+            <button id="clearSlotButton" class="btn-primary btn-secondary">🗑 Clear selection</button>
+
+            <div class="appointments-list">
+                <h4>📋 Appointments for selected date</h4>
+                <div id="appointmentsList">
+                    <div class="empty-msg">✨ No appointments yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>
+        🔔 Simple booking system — click any free slot, enter your name, confirm. You can cancel anytime. Data persists in your browser.
+    </footer>
+</div>
+
+<script>
+    // -------------------- DATA LAYER (localStorage + in-memory) --------------------
+    // Storage key for netlify persistence
+    const STORAGE_KEY = "appointment_booking_system";
+    
+    // booking structure: { "2025-01-20": { "14:00": { name, contact, slot }, ... } }
+    let appointmentBookings = {};
+
+    // Predefined time slots (9:00 to 18:00)
+    const TIME_SLOTS_LIST = [
+        "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"
+    ];
+
+    // Helper: get current date in YYYY-MM-DD (local)
+    function getLocalToday() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Load data from localStorage
+    function loadDataFromStorage() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                if (parsed && typeof parsed === 'object') {
+                    appointmentBookings = parsed;
+                }
+            } catch(e) { console.warn("Failed to parse storage", e); }
+        }
+        // ensure at least empty object
+        if (!appointmentBookings) appointmentBookings = {};
+    }
+
+    // Save current bookings to localStorage
+    function persistBookings() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appointmentBookings));
+    }
+
+    // Ensure date exists
+    function ensureDateBookings(date) {
+        if (!appointmentBookings[date]) {
+            appointmentBookings[date] = {};
+        }
+    }
+
+    // Get all bookings for a specific date
+    function getBookingsByDate(date) {
+        return appointmentBookings[date] || {};
+    }
+
+    // Check slot status
+    function isSlotBooked(date, slotTime) {
+        const dateBook = getBookingsByDate(date);
+        return !!dateBook[slotTime];
+    }
+
+    // Add a new booking
+    function addBooking(date, slotTime, clientName, clientContact) {
+        if (!clientName || clientName.trim() === "") {
+            alert("❌ Please enter your name to book an appointment.");
+            return false;
+        }
+        if (isSlotBooked(date, slotTime)) {
+            alert(`⚠️ Sorry, the slot ${slotTime} is already taken. Please pick another.`);
+            return false;
+        }
+        ensureDateBookings(date);
+        appointmentBookings[date][slotTime] = {
+            name: clientName.trim(),
+            contact: clientContact ? clientContact.trim() : "",
+            slot: slotTime,
+            bookedAt: Date.now()
+        };
+        persistBookings();   // immediately save to localStorage
+        return true;
+    }
+
+    // Cancel booking
+    function cancelBooking(date, slotTime) {
+        if (appointmentBookings[date] && appointmentBookings[date][slotTime]) {
+            delete appointmentBookings[date][slotTime];
+            persistBookings();
+            return true;
+        }
+        return false;
+    }
+
+    // Get sorted list for a date
+    function getSortedBookingsForDate(date) {
+        const dateBook = getBookingsByDate(date);
+        return Object.entries(dateBook).map(([slot, details]) => ({
+            slot: slot,
+            name: details.name,
+            contact: details.contact
+        })).sort((a,b) => a.slot.localeCompare(b.slot));
+    }
+
+    // -------------------- UI STATE --------------------
+    let currentSelectedDate = getLocalToday();
+    let currentSelectedSlot = null;
+
+    // DOM references
+    const datePicker = document.getElementById('appointmentDate');
+    const slotsContainer = document.getElementById('slotsContainer');
+    const totalBookedSpan = document.getElementById('totalBookedCount');
+    const selectedSlotDisplay = document.getElementById('selectedSlotDisplay');
+    const confirmBtn = document.getElementById('confirmBookingButton');
+    const clearBtn = document.getElementById('clearSlotButton');
+    const appointmentsListDiv = document.getElementById('appointmentsList');
+    const clientNameInput = document.getElementById('clientName');
+    const clientContactInput = document.getElementById('clientContact');
+
+    // update total booked counter
+    function updateBookedCounter() {
+        const bookingsObj = getBookingsByDate(currentSelectedDate);
+        const count = Object.keys(bookingsObj).length;
+        totalBookedSpan.innerText = count;
+    }
+
+    // Render time slots grid fully
+    function renderTimeSlots() {
+        if (!slotsContainer) return;
+        slotsContainer.innerHTML = '';
+        
+        for (let slot of TIME_SLOTS_LIST) {
+            const booked = isSlotBooked(currentSelectedDate, slot);
+            const isSelected = (currentSelectedSlot === slot && !booked);
+            const slotDiv = document.createElement('div');
+            slotDiv.className = 'slot-card';
+            if (booked) slotDiv.classList.add('slot-booked');
+            if (isSelected) slotDiv.classList.add('slot-selected');
+            slotDiv.textContent = slot;
+            
+            if (!booked) {
+                slotDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    currentSelectedSlot = slot;
+                    renderTimeSlots();          // re-render highlights
+                    updateSelectedInfo();
+                });
+            } else {
+                const bookingOwner = getBookingsByDate(currentSelectedDate)[slot]?.name || "someone";
+                slotDiv.title = `Booked by ${bookingOwner}`;
+            }
+            slotsContainer.appendChild(slotDiv);
+        }
+    }
+
+    // Update selected slot preview text
+    function updateSelectedInfo() {
+        if (currentSelectedSlot) {
+            selectedSlotDisplay.innerHTML = `🕒 <strong>${currentSelectedSlot}</strong><br><small>Fill your details and confirm</small>`;
+        } else {
+            selectedSlotDisplay.innerHTML = `⚡ No slot selected<br><small>Click any available time slot above</small>`;
+        }
+    }
+
+    // Render appointment list (with cancel buttons)
+    function renderBookingList() {
+        if (!appointmentsListDiv) return;
+        const bookingsArray = getSortedBookingsForDate(currentSelectedDate);
+        
+        if (bookingsArray.length === 0) {
+            appointmentsListDiv.innerHTML = `<div class="empty-msg">📭 No bookings for ${currentSelectedDate}</div>`;
+            return;
+        }
+        
+        const listWrapper = document.createElement('div');
+        bookingsArray.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'booking-item';
+            const contactExtra = item.contact ? ` · ${escapeHtmlSimple(item.contact)}` : '';
+            itemDiv.innerHTML = `
+                <div class="booking-info">
+                    <strong>${item.slot}</strong> — ${escapeHtmlSimple(item.name)}${contactExtra}
+                </div>
+                <button class="cancel-btn" data-slot="${item.slot}" title="Cancel appointment">✖</button>
+            `;
+            listWrapper.appendChild(itemDiv);
+        });
+        
+        appointmentsListDiv.innerHTML = '';
+        appointmentsListDiv.appendChild(listWrapper);
+        
+        // attach cancel events
+        document.querySelectorAll('.cancel-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const slotToCancel = btn.getAttribute('data-slot');
+                if (slotToCancel && confirm(`Cancel appointment at ${slotToCancel} on ${currentSelectedDate}?`)) {
+                    const success = cancelBooking(currentSelectedDate, slotToCancel);
+                    if (success) {
+                        if (currentSelectedSlot === slotToCancel) {
+                            currentSelectedSlot = null;
+                            updateSelectedInfo();
+                        }
+                        fullRefreshUI();
+                    } else {
+                        alert("Unable to cancel appointment.");
+                    }
+                }
+            });
+        });
+    }
+
+    // simple escape to avoid injection
+    function escapeHtmlSimple(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // Full refresh: slots, list, counter, selected info
+    function fullRefreshUI() {
+        renderTimeSlots();
+        renderBookingList();
+        updateBookedCounter();
+        updateSelectedInfo();
+    }
+
+    // Confirm booking handler
+    function handleConfirm() {
+        if (!currentSelectedSlot) {
+            alert("Please select a time slot first.");
+            return;
+        }
+        
+        const slot = currentSelectedSlot;
+        // Double-check availability
+        if (isSlotBooked(currentSelectedDate, slot)) {
+            alert(`The slot ${slot} is no longer available. Please pick another.`);
+            currentSelectedSlot = null;
+            fullRefreshUI();
+            return;
+        }
+        
+        const name = clientNameInput.value.trim();
+        if (name === "") {
+            alert("❌ Please enter your full name.");
+            return;
+        }
+        const contact = clientContactInput.value.trim();
+        
+        const success = addBooking(currentSelectedDate, slot, name, contact);
+        if (success) {
+            // reset form & selection
+            clientNameInput.value = "";
+            clientContactInput.value = "";
+            currentSelectedSlot = null;
+            fullRefreshUI();
+            alert(`✅ Booking confirmed!\n📅 ${currentSelectedDate} at ${slot}\n👤 ${name}`);
+        } else {
+            fullRefreshUI(); // re-sync if race condition
+        }
+    }
+    
+    // Clear current slot selection
+    function handleClear() {
+        currentSelectedSlot = null;
+        fullRefreshUI();
+    }
+    
+    // Date change handler
+    function onDateChange() {
+        const newDate = datePicker.value;
+        if (!newDate) return;
+        if (newDate !== currentSelectedDate) {
+            currentSelectedDate = newDate;
+            currentSelectedSlot = null;
+            ensureDateBookings(currentSelectedDate);
+            fullRefreshUI();
+        } else {
+            ensureDateBookings(currentSelectedDate);
+            fullRefreshUI();
+        }
+    }
+    
+    // Seed demo data (only if storage is empty / first visit)
+    function seedDemoDataIfNeeded() {
+        const existingData = localStorage.getItem(STORAGE_KEY);
+        if (existingData) return;  // already have user data, don't override
+        
+        const today = getLocalToday();
+        const tomorrowDate = new Date();
+        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+        const tomorrow = tomorrowDate.toISOString().slice(0,10);
+        
+        // add a couple of demo appointments for today to show functionality
+        ensureDateBookings(today);
+        if (!appointmentBookings[today]["11:00"]) {
+            appointmentBookings[today]["11:00"] = { name: "Sam Rivera", contact: "sam@example.com", slot: "11:00" };
+        }
+        if (!appointmentBookings[today]["15:30"]) {
+            appointmentBookings[today]["15:30"] = { name: "Jordan Lee", contact: "+1 555 2345", slot: "15:30" };
+        }
+        // small demo for tomorrow so users see cross-day
+        ensureDateBookings(tomorrow);
+        if (!appointmentBookings[tomorrow]["10:00"]) {
+            appointmentBookings[tomorrow]["10:00"] = { name: "Demo User", contact: "hello@netlify.com", slot: "10:00" };
+        }
+        persistBookings();
+    }
+    
+    // Final initialization
+    function init() {
+        loadDataFromStorage();          // load from localStorage first
+        seedDemoDataIfNeeded();         // only adds demo if storage empty
+        
+        // set default date picker
+        datePicker.value = getLocalToday();
+        currentSelectedDate = getLocalToday();
+        ensureDateBookings(currentSelectedDate);
+        
+        // initial render
+        fullRefreshUI();
+        
+        // attach global events
+        datePicker.addEventListener('change', onDateChange);
+        confirmBtn.addEventListener('click', handleConfirm);
+        clearBtn.addEventListener('click', handleClear);
+        
+        // optional: clear any stale selected on window load
+        window.addEventListener('load', () => {
+            // just ensure sync
+            fullRefreshUI();
+        });
+    }
+    
+    // start the app
+    init();
+</script>
+</body>
+</html>
